@@ -9,11 +9,9 @@ unsigned char count;  // a "char" is 8-bits = one byte It makes the numbers go f
 void setup() {
 
 
-pinMode(button1,INPUT);
-digitalWrite(button1,HIGH);
-pinMode(button2,INPUT);
-digitalWrite(button2,HIGH);
-  
+pinMode(button1,INPUT_PULLUP);  // Use INPUT_PULLUP instead of a digitalwrite(#,HIGH); to more accurately describe intent.
+pinMode(button2,INPUT_PULLUP);
+
 count = EEPROM.read(0); //read what was saved at spot 0 and make it equal to count
   
   uView.begin();
@@ -40,6 +38,7 @@ static boolean pressed2 = false;
 static long int presstime2 = 0L;
 static boolean longpress2 = false;
 
+static boolean changed = true;  // default with true to force the first display of the count value. Otherwise it won't display until the count is changed by the first button press.
 
 if (digitalRead(button1) == 0)
 {
@@ -48,6 +47,7 @@ if (digitalRead(button1) == 0)
      pressed1 = true;
      presstime1 = millis();
      count++; //add one to the count
+     changed = true;  // Take note that the count has changed to update the display
      EEPROM.write(0,count); //save it
   }
   else
@@ -55,6 +55,7 @@ if (digitalRead(button1) == 0)
   {
     longpress1 = true;
     count = 0; //reset
+    changed = true;  // Take note that the count has changed to update the display
     EEPROM.write(0,count); //save it
   }
 }
@@ -75,6 +76,7 @@ if (digitalRead(button2) == 0)
      pressed2 = true;
      presstime2 = millis();
      count--;
+     changed = true;  // Take note that the count has changed to update the display
      EEPROM.write(0,count);
   }
   else
@@ -82,6 +84,7 @@ if (digitalRead(button2) == 0)
   {
     longpress2 = true;
     count = 0;
+    changed = true;  // Take note that the count has changed to update the display
     EEPROM.write(0,count);
   }
 }
@@ -94,13 +97,16 @@ else
   }
 }
   
-//uView.setCursor(0,10);
-//uView.print("   ");
-//uView.display();
-// I want to add the above to remove orphaned char on the screen, but it makes the number flicker
+if (changed)  // Only clear the display and show the count if it the changed flag is true. Allows removal of orphaned char(s) without flickering.
+{
+  uView.setCursor(0,10);
+  uView.print("   ");
+  uView.display();
 
-uView.setCursor(0,10);
-uView.print(count);
-uView.display();
+  uView.setCursor(0,10);
+  uView.print(count);
+  uView.display();
+  changed = false;  // Reset changed flag to avoid the display flickering.
+}
   
 }
